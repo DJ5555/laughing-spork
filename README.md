@@ -1,5 +1,4 @@
-# laughing-spork
-Hazard Models
+# Hazard Models
 
 
 We will use the logit and cloglog links in the glm( ) function to estimate  discrete Hazard models. The data file is “HHonors_booking.csv”. For 400 Hilton HHonors members, we have the following variables:
