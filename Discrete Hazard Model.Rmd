@@ -1,0 +1,100 @@
+---
+title: "Hazard Model"
+---
+
+
+
+```{r}
+library(lme4)
+```
+
+```{r}
+hotel = read.csv("HHonors_booking.csv", header=T)
+interval = c( )
+for(i in 1:400) {
+   hotel.i = hotel[hotel$customerID==i,]
+   interval.i = rep(0, 50)
+   sinceBooking = 0
+   for(t in 1:50) {
+       sinceBooking = sinceBooking + 1
+       interval.i[t] = sinceBooking
+       if (hotel.i$Booking[t] == 1) sinceBooking = 0
+   }
+   interval = c(interval, interval.i)
+}
+hotel$Interval = interval  
+
+```
+We estimate the following logistic regression model using the R function glm( ) 
+
+log(λi(t)/(1- λi(t)) = B0 + B1×Intervalit + B2×Priceit +B3×Promotionit 
+                                  + B4×Incomei +B5×Genderi 
+```{r}
+hotel.logit = glm(Booking~Interval+Price+Promotion+Income+Gender, family = binomial (link=logit),data=hotel)
+summary(hotel.logit)
+```
+B1 : When interval increases, the probability of booking will increase.
+B2 : When price increases, the probability of booking will decrease.
+B3: When there is a promotion, the probability of booking will not change.
+B4: When income increases, the probability of booking will increase.
+B5 : When gender changes, the probability of booking will not change.
+
+Among these coefficients,B3 and B5 are not significant.
+
+```{r}
+hotel.logit2 = glm(Booking~ poly(Interval,2)+Price+Promotion+Income+Gender, family = binomial (link=logit),data=hotel)
+summary(hotel.logit2)
+```
+B2,B4, B6 are not significant.
+```{r}
+AIC(hotel.logit)
+AIC(hotel.logit2)
+BIC(hotel.logit)
+BIC(hotel.logit2)
+```
+The first model would seem superior.
+
+We estimate the following cloglog regression model using the R function glm( ) 
+
+log(-log(1- λi(t)) = B0 + B1×Intervalit + B2×Priceit +B3×Promotionit 
+                                  + B4×Incomei +B5×Genderi
+                                  
+```{r}
+hotel.clog = glm(Booking~Interval+Price+Promotion+Income+Gender, family = binomial (link=cloglog),data=hotel)
+summary(hotel.clog)
+```
+B1: When interval increases, the probability of booking will increase.
+B2: When price increases, the probability of booking will decrease.
+B3: When there is a promotion, the probability of booking will not change.
+B4: When income increases, the probability of booking will increase.
+B5: When gender changes, the probability of booking will not change.
+B3, B5  are not significant.
+
+```{r}
+AIC(hotel.clog)
+BIC(hotel.clog)
+```
+
+Next, we will let the intercept be a random effect 0i in both the logistic and cloglog models
+
+log(λi(t)/(1- λi(t)) = B0i + B1×Intervalit + B2×Priceit +B3×Promotionit 
+                                  + B4×Incomei +B5×Genderi 
+log(-log(1- λi(t)) = B0i + B1×Intervalit + B2×Priceit +B3×Promotionit 
+                                  + B4×Incomei +B5×Genderi 
+```{r}
+hotel.logit3 = glmer(Booking~Interval+Price+Promotion+Income+Gender+(1|customerID),data=hotel, family = binomial(link="logit"))
+summary(hotel.logit3)
+```
+```{r}
+hotel.clog2 = glmer(Booking~Interval+Price+Promotion+Income+Gender+(1|customerID),data=hotel, family = binomial(link="cloglog"))
+summary(hotel.clog2)
+```
+```{r}
+AIC(hotel.logit3)
+AIC(hotel.clog2)
+BIC(hotel.logit3)
+BIC(hotel.clog2)
+```
+
+The last model would seem to be the best one.
+
